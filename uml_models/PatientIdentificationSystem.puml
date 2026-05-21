@@ -1,0 +1,75 @@
+@startuml PatientIdentificationSystem
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam linetype ortho
+title Patient Identification System
+
+class PatientIdentifier {
+  - registry : PatientRegistry
+  - identityManager : IdentityManager
+  + match(incomingId : int) : HospitalPatient
+  + isKnownPatient(patientId : int) : boolean
+  + handleMismatch(patientId : int) : void
+}
+
+class HospitalPatient {
+  - patientId : int
+  - name : String
+  - dateOfBirth : String
+  - medicalHistory : List
+  - assignedDoctor : String
+  - ward : String
+  + getPatientId() : int
+  + getName() : String
+  + getMedicalHistory() : List
+  + getAssignedDoctor() : String
+  + getWard() : String
+}
+
+class PatientRegistry {
+  - patients : Map
+  + register(patient : HospitalPatient) : void
+  + lookup(patientId : int) : HospitalPatient
+  + deregister(patientId : int) : void
+  + contains(patientId : int) : boolean
+  + getAllPatients() : List
+}
+
+class IdentityManager {
+  - mismatchLog : List
+  + verifyIntegrity(patientId : int, record : PatientRecord) : boolean
+  + logMismatch(mismatch : IdentityMismatch) : void
+  + getMismatches() : List
+  + resolveConflict(patientId : int) : void
+}
+
+class IdentityMismatch {
+  - patientId : int
+  - reason : String
+  - timestamp : long
+  - resolved : boolean
+  + getPatientId() : int
+  + getReason() : String
+  + resolve() : void
+  + isResolved() : boolean
+}
+
+class PatientRecord {
+  - patientId : int
+  - measurementValue : double
+  - recordType : String
+  - timestamp : long
+  + getPatientId() : int
+  + getRecordType() : String
+  + getTimestamp() : long
+}
+
+PatientIdentifier --> PatientRegistry : queries
+PatientIdentifier --> IdentityManager : delegates to
+PatientIdentifier ..> HospitalPatient : returns
+PatientRegistry "1" o-- "0..*" HospitalPatient : manages
+IdentityManager "1" *-- "0..*" IdentityMismatch : tracks
+PatientIdentifier ..> PatientRecord : identifies
+
+@enduml

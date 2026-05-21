@@ -1,0 +1,98 @@
+@startuml AlertGenerationSystem
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam linetype ortho
+title Alert Generation System
+
+interface AlertCondition {
+  + evaluate(record : PatientRecord) : boolean
+  + getDescription() : String
+}
+
+class ThresholdAlertCondition implements AlertCondition {
+  - metric : String
+  - threshold : double
+  - operator : String
+  + ThresholdAlertCondition(metric : String, threshold : double, operator : String)
+  + evaluate(record : PatientRecord) : boolean
+  + getDescription() : String
+}
+
+class Alert {
+  - alertId : String
+  - patientId : int
+  - condition : String
+  - timestamp : long
+  - severity : AlertSeverity
+  - resolved : boolean
+  + Alert(patientId : int, condition : String, severity : AlertSeverity)
+  + getPatientId() : int
+  + getCondition() : String
+  + getTimestamp() : long
+  + getSeverity() : AlertSeverity
+  + resolve() : void
+  + isResolved() : boolean
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+class AlertGenerator {
+  - dataStorage : DataStorage
+  - conditionRegistry : Map
+  - alertManager : AlertManager
+  + AlertGenerator(storage : DataStorage)
+  + evaluateData(patient : Patient) : void
+  + registerCondition(patientId : int, condition : AlertCondition) : void
+  - triggerAlert(alert : Alert) : void
+}
+
+class AlertManager {
+  - activeAlerts : List
+  - notifiers : List
+  + dispatch(alert : Alert) : void
+  + resolveAlert(alertId : String) : void
+  + getActiveAlerts() : List
+  + addNotifier(notifier : AlertNotifier) : void
+}
+
+interface AlertNotifier {
+  + notify(alert : Alert) : void
+}
+
+class MedicalStaffNotifier implements AlertNotifier {
+  - staffId : String
+  - contactMethod : String
+  + MedicalStaffNotifier(staffId : String, method : String)
+  + notify(alert : Alert) : void
+}
+
+class DataStorage {
+  - patientMap : Map
+  + getRecords(patientId : int, start : long, end : long) : List
+  + getAllPatients() : List
+}
+
+class Patient {
+  - patientId : int
+  - records : List
+  + getPatientId() : int
+  + getRecords(start : long, end : long) : List
+}
+
+AlertGenerator --> DataStorage : uses
+AlertGenerator --> AlertManager : dispatches to
+AlertGenerator ..> Alert : creates
+AlertGenerator "1" o-- "0..*" AlertCondition : per-patient conditions
+AlertCondition <|.. ThresholdAlertCondition
+Alert --> AlertSeverity
+AlertManager "1" --> "0..*" AlertNotifier : notifies
+AlertNotifier <|.. MedicalStaffNotifier
+AlertGenerator --> Patient : evaluates
+
+@enduml

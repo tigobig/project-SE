@@ -1,0 +1,74 @@
+@startuml DataAccessLayer
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam linetype ortho
+title Data Access Layer
+
+abstract class DataListener {
+  # isRunning : boolean
+  # parser : DataParser
+  + {abstract} start() : void
+  + {abstract} stop() : void
+  # onDataReceived(raw : String) : void
+}
+
+class TCPDataListener extends DataListener {
+  - host : String
+  - port : int
+  + TCPDataListener(host : String, port : int)
+  + start() : void
+  + stop() : void
+}
+
+class WebSocketDataListener extends DataListener {
+  - serverUri : String
+  + WebSocketDataListener(serverUri : String)
+  + start() : void
+  + stop() : void
+}
+
+class FileDataListener extends DataListener {
+  - filePath : String
+  - pollIntervalMs : long
+  + FileDataListener(filePath : String, intervalMs : long)
+  + start() : void
+  + stop() : void
+}
+
+class DataParser {
+  + parse(raw : String) : ParsedRecord
+  + isValid(raw : String) : boolean
+}
+
+class ParsedRecord {
+  - patientId : int
+  - timestamp : long
+  - label : String
+  - value : String
+  + getPatientId() : int
+  + getTimestamp() : long
+  + getLabel() : String
+  + getValue() : String
+}
+
+class DataSourceAdapter {
+  - storage : DataStorage
+  + onParsedRecord(record : ParsedRecord) : void
+  + connectListener(listener : DataListener) : void
+}
+
+class DataStorage {
+  + addPatientData(patientId : int, value : double, type : String, timestamp : long) : void
+  + getAllPatients() : List
+}
+
+DataListener <|-- TCPDataListener
+DataListener <|-- WebSocketDataListener
+DataListener <|-- FileDataListener
+DataListener "1" --> "1" DataParser : uses
+DataParser ..> ParsedRecord : produces
+DataListener "0..*" --> "1" DataSourceAdapter : forwards to
+DataSourceAdapter "1" --> "1" DataStorage : persists in
+
+@enduml

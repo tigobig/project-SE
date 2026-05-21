@@ -1,0 +1,82 @@
+@startuml DataStorageSystem
+!pragma layout smetana
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam linetype ortho
+title Data Storage System
+
+interface DataRetriever {
+  + getRecords(patientId : int, start : long, end : long) : List
+  + getLatestRecord(patientId : int, metric : String) : PatientRecord
+}
+
+class DataStorage implements DataRetriever {
+  - patientMap : Map
+  - accessController : AccessController
+  - deletionPolicy : DataDeletionPolicy
+  - auditLog : AuditLog
+  + addPatientData(patientId : int, value : double, type : String, timestamp : long) : void
+  + getRecords(patientId : int, start : long, end : long) : List
+  + getLatestRecord(patientId : int, metric : String) : PatientRecord
+  + getAllPatients() : List
+  + purgeExpiredRecords() : void
+}
+
+class PatientRecord {
+  - patientId : int
+  - measurementValue : double
+  - recordType : String
+  - timestamp : long
+  + getPatientId() : int
+  + getMeasurementValue() : double
+  + getRecordType() : String
+  + getTimestamp() : long
+}
+
+class Patient {
+  - patientId : int
+  - records : List
+  + addRecord(value : double, type : String, timestamp : long) : void
+  + getRecords(start : long, end : long) : List
+  + getPatientId() : int
+}
+
+class AccessController {
+  - rolePermissions : Map
+  + canRead(role : String, patientId : int) : boolean
+  + canWrite(role : String, patientId : int) : boolean
+  + grantAccess(role : String, permission : String) : void
+  + revokeAccess(role : String, permission : String) : void
+}
+
+class DataDeletionPolicy {
+  - retentionDays : int
+  + isExpired(record : PatientRecord) : boolean
+  + getRetentionDays() : int
+  + setRetentionDays(days : int) : void
+}
+
+class AuditLog {
+  - entries : List
+  + logAccess(userId : String, patientId : int, action : String) : void
+  + getEntries(patientId : int) : List
+}
+
+class AuditEntry {
+  - userId : String
+  - patientId : int
+  - action : String
+  - timestamp : long
+  + getUserId() : String
+  + getAction() : String
+  + getTimestamp() : long
+}
+
+DataStorage "1" *-- "0..*" Patient : stores
+Patient "1" *-- "0..*" PatientRecord : owns
+DataStorage "1" --> "1" AccessController : enforces
+DataStorage "1" --> "1" DataDeletionPolicy : applies
+DataStorage "1" --> "1" AuditLog : logs access via
+AuditLog "1" *-- "0..*" AuditEntry : contains
+
+@enduml
