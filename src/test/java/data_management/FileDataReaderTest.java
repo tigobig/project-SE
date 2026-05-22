@@ -29,7 +29,8 @@ class FileDataReaderTest {
 
     @BeforeEach
     void setUp() {
-        storage = new DataStorage();
+        DataStorage.resetInstance();
+        storage = DataStorage.getInstance();
     }
 
     //valid data
